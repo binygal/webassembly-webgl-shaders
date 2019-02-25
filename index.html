@@ -6,8 +6,8 @@
     <script src="./dist/appWASM.js"></script>
     <script>
     "use strict"
-    window.addEventListener("wasmLoaded", () => {
 
+    window.addEventListener("wasmLoaded", () => {
         console.log("wasmLoaded")
 
         let previewCanvasContext
@@ -21,7 +21,7 @@
             const context = canvas.getContext("webgl2")
 
             const idBuffer = Module._malloc(id.length+1)
-            Module.stringToUTF8(id, idBuffer, id.length+1)
+            stringToUTF8(id, idBuffer, id.length+1)
             Module.ccall("createContext", null, ["number", "number", "number", "number"], [width, height, idBuffer, index])
         }
 

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Demo project for using WebGL shaders in WebAssembly",
   "scripts": {
-    "build": "rm -rf build && mkdir build && cd build && cmake -G\"MSYS Makefiles\" .. && npm install"
+    "build": "rm -rf build && mkdir build && cd build && cmake -G\"MSYS Makefiles\" .. && npm install",
+    "serve": "ws"
   },
   "repository": {
     "type": "git",
@@ -23,8 +24,12 @@
   "devDependencies": {
     "grunt": "^1.0.1",
     "grunt-cli": "^1.2.0",
-    "grunt-contrib-uglify": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
+    "grunt-contrib-uglify": "git://github.com/gruntjs/grunt-contrib-uglify.git",
     "grunt-contrib-watch": "^1.0.0",
     "grunt-exec": "^3.0.0"
+  },
+  "dependencies": {
+    "grunt-contrib-uglify-es": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
+    "local-web-server": "^2.6.1"
   }
 }

@@ -13,14 +13,15 @@ http.createServer((request, response) => {
 
     console.log(path)
 
-    if (path=="/appWASM.wasm") {
-        path = "/dist"+path
+    if (path.split('.').pop() == "wasm") {
+        response.setHeader("Content-Type", 'application/wasm');
     }
 
     try{
         data = fs.readFileSync(__dirname+path)
     }catch(e){}
 
+    
     response.end(data)
 
 }).listen(1337, () => console.log("Server listening on port 1337"))
