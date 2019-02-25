@@ -1,13 +1,16 @@
+"use strict";
+
 window.addEventListener("wasmLoaded", () => {
   console.log("wasmLoaded");
 
-  /** @type {CanvasRenderingContext2D} */
   let previewCanvasContext;
-  const canvasContainer = document.getElementById("canvasContainer");
+  let secondaryCanvasContext;
 
-  /** @type {HTMLInputElement} */
+  const canvasContainer = document.getElementById("canvasContainer");
+  const canvasContainer1 = document.getElementById("canvasContainer1");
   const fileInput = document.getElementById("fileInput");
-  const convert = document.getElementById("convert");
+  const fileInput2 = document.getElementById("fileInput2");
+  const convert = document.getElementById("previewCanvas");
 
   const createCanvas = (id, index, width, height) => {
     const canvas = document.createElement("canvas");
@@ -27,7 +30,7 @@ window.addEventListener("wasmLoaded", () => {
     );
   };
 
-  const loadImage = src => {
+  const loadImage1 = src => {
     Module.ccall("clearContexts", null, null, null);
 
     const img = new Image();
@@ -49,19 +52,45 @@ window.addEventListener("wasmLoaded", () => {
     img.src = src;
   };
 
+  const loadImage2 = src => {
+    const img = new Image();
+    img.addEventListener("load", () => {
+      const secondaryCanvas = document.createElement("canvas");
+      secondaryCanvas.id = "secondaryCanvas";
+      secondaryCanvas.height = img.height;
+      secondaryCanvas.width = img.width;
+
+      canvasContainer1.innerHTML = "";
+      secondaryCanvasContext = secondaryCanvas.getContext("2d");
+      secondaryCanvasContext.drawImage(img, 0, 0);
+      canvasContainer1.appendChild(secondaryCanvas);
+    });
+
+    img.src = src;
+  };
+
   // Default image
-  loadImage("image.png");
+  loadImage1("image.png");
+  loadImage2("image.png");
 
   // File input
   fileInput.addEventListener("change", event =>
-    loadImage(URL.createObjectURL(event.target.files[0]))
+    loadImage1(URL.createObjectURL(event.target.files[0]))
+  );
+  fileInput2.addEventListener("change", event =>
+    loadImage2(URL.createObjectURL(event.target.files[0]))
   );
 
   convert.addEventListener("click", () => {
-    /** @type {HTMLCanvasElement} */
     const previewCanvas = document.getElementById("previewCanvas");
     // Get imageData from the image
-    const imageData = previewCanvasContext.getImageData(
+    const image1Data = previewCanvasContext.getImageData(
+      0,
+      0,
+      previewCanvas.width,
+      previewCanvas.height
+    ).data;
+    const image2Data = secondaryCanvasContext.getImageData(
       0,
       0,
       previewCanvas.width,
@@ -69,10 +98,25 @@ window.addEventListener("wasmLoaded", () => {
     ).data;
 
     // Pass the imageData to the C++ code
-    ccallArrays("loadTexture", null, ["array"], [imageData], {
+    ccallArrays("blendTexturesSetup", null, ["array"], [image1Data], {
       heapIn: "HEAPU8"
     });
-    ccallArrays("detectEdges", null, ["array"], [imageData], {
+    ccallArrays("blendTexturesLoadMain", null, ["array"], [image2Data], {
+      heapIn: "HEAPU8"
+    });
+    ccallArrays("blendTexturesLoadSecondary", null, ["array"], [image1Data], {
+      heapIn: "HEAPU8"
+    });
+    ccallArrays("blendTexturesRun", null, ["array"], [image1Data], {
+      heapIn: "HEAPU8"
+    });
+    ccallArrays("detectingEdgesSetup", null, ["array"], [image1Data], {
+      heapIn: "HEAPU8"
+    });
+    ccallArrays("detectingEdgesLoadMain", null, ["array"], [image2Data], {
+      heapIn: "HEAPU8"
+    });
+    ccallArrays("detectingEdgesRun", null, ["array"], [image1Data], {
       heapIn: "HEAPU8"
     });
   });
