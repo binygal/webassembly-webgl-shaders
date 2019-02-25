@@ -10,7 +10,7 @@ window.addEventListener("wasmLoaded", () => {
   const canvasContainer1 = document.getElementById("canvasContainer1");
   const fileInput = document.getElementById("fileInput");
   const fileInput2 = document.getElementById("fileInput2");
-  const convert = document.getElementById("previewCanvas");
+  const convert = document.getElementById("convert");
 
   const createCanvas = (id, index, width, height) => {
     const canvas = document.createElement("canvas");
@@ -113,7 +113,7 @@ window.addEventListener("wasmLoaded", () => {
     ccallArrays("detectingEdgesSetup", null, ["array"], [image1Data], {
       heapIn: "HEAPU8"
     });
-    ccallArrays("detectingEdgesLoadMain", null, ["array"], [image2Data], {
+    ccallArrays("detectingEdgesLoadMain", null, ["array"], [image1Data], {
       heapIn: "HEAPU8"
     });
     ccallArrays("detectingEdgesRun", null, ["array"], [image1Data], {
