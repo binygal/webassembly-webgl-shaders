@@ -6,7 +6,11 @@ public:
 
     ~Context (void);
 
-    void run (uint8_t* buffer);
+    void setupTexture(const GLchar * name, GLenum texture, uint8_t* buffer, int samplerNum);
+    void setup();
+    void setupMainTexture (uint8_t* buffer);
+    void setupSecondaryTexture (uint8_t* buffer);
+    void run ();
 
 private:
     int width;

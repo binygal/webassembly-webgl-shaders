@@ -39,19 +39,54 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE
-    void loadTexture (uint8_t *buf, int bufSize) {
-        printf("[WASM] Loading Texture \n");
+    void blendTexturesSetup () {
+        printf("[WASM] Blending Textures setup \n");
 
-        contexts[0]->run(buf);
+        contexts[0]->setup();
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void blendTexturesLoadMain(uint8_t *buf, int bufSize) {
+        printf("[WASM] Blending Textures load main \n");
+
+        contexts[0]->setupMainTexture(buf);
         free(buf);
     }
 
     EMSCRIPTEN_KEEPALIVE
-    void detectEdges (uint8_t *buf, int bufSize) {
-        printf("[WASM] Detecting edges \n");
+    void blendTexturesLoadSecondary(uint8_t *buf, int bufSize) {
+        printf("[WASM] Blending Textures load secondary \n");
 
-        contexts[1]->run(buf);
+        contexts[0]->setupSecondaryTexture(buf);
         free(buf);
     }
 
+    EMSCRIPTEN_KEEPALIVE
+    void blendTexturesRun () {
+        printf("[WASM] Blending Textures run \n");
+
+        contexts[0]->run();
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void detectingEdgesSetup () {
+        printf("[WASM] Detecting Edges setup \n");
+
+        contexts[1]->setup();
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void detectingEdgesLoadMain(uint8_t *buf, int bufSize) {
+        printf("[WASM] Detecting Edges load main \n");
+
+        contexts[1]->setupMainTexture(buf);
+        free(buf);
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void detectingEdgesRun () {
+        printf("[WASM] Detecting Edges run \n");
+
+        contexts[1]->run();
+    }
 }
