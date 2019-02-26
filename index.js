@@ -7,6 +7,7 @@ import {
   renderFrame,
   setup
 } from "./videoRenderer";
+import { size as globalSize } from "./globals";
 
 window.addEventListener("wasmLoaded", () => {
   console.log("wasmLoaded");
@@ -46,18 +47,18 @@ window.addEventListener("wasmLoaded", () => {
     secondaryCanvasContext.drawImage(secondVideoElement, 0, 0);
   });
 
-  function createCanvases(size) {
+  function createCanvases() {
     canvasContainer.childNodes.forEach(c => canvasContainer.removeChild(c));
     const textureLoadCanvas = document.createElement("canvas");
     textureLoadCanvas.id = "textureLoad";
-    textureLoadCanvas.width = 800;
-    textureLoadCanvas.height = 600;
+    textureLoadCanvas.width = globalSize.width;
+    textureLoadCanvas.height = globalSize.height;
     canvasContainer.appendChild(textureLoadCanvas);
 
     const edgeDetectCanvas = document.createElement("canvas");
     edgeDetectCanvas.id = "edgeDetect";
-    edgeDetectCanvas.width = 800;
-    edgeDetectCanvas.height = 600;
+    edgeDetectCanvas.width = globalSize.width;
+    edgeDetectCanvas.height = globalSize.height;
     canvasContainer.appendChild(edgeDetectCanvas);
 
     createContext(textureLoadCanvas, 0);
@@ -67,10 +68,7 @@ window.addEventListener("wasmLoaded", () => {
   function loadFirstVideo(src) {
     clearContex();
     firstVideoElement.src = src;
-    createCanvases({
-      width: firstVideoElement.clientWidth,
-      height: firstVideoElement.clientHeight
-    });
+    createCanvases();
   }
 
   function loadSecondVideo(src) {

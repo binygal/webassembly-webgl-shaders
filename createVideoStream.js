@@ -1,25 +1,43 @@
+import { size as globalSize } from "./globals";
+
 /**
  *
  * @param {HTMLVideoElement} video
- * @param {CanvasRenderingContext2D} renderContext
+ * @param {WebGLRenderingContext} renderContext
  * @param {function} callback
  */
 function frame(video, renderContext, callback) {
-  renderContext.drawImage(
-    video,
+  const tex = renderContext.createTexture();
+  renderContext.bindTexture(renderContext.TEXTURE_2D, tex);
+  const fbo = renderContext.createFramebuffer();
+  renderContext.bindFramebuffer(renderContext.FRAMEBUFFER, fbo);
+  renderContext.viewport(0, 0, globalSize.width, globalSize.height);
+  renderContext.framebufferTexture2D(
+    renderContext.FRAMEBUFFER,
+    renderContext.COLOR_ATTACHMENT0,
+    renderContext.TEXTURE_2D,
+    tex,
+    0
+  );
+  renderContext.texImage2D(
+    renderContext.TEXTURE_2D,
+    0,
+    renderContext.RGBA,
+    renderContext.RGBA,
+    renderContext.UNSIGNED_BYTE,
+    video
+  );
+  const typedArray = new Uint8Array(globalSize.width * globalSize.height * 4);
+  renderContext.readPixels(
     0,
     0,
-    renderContext.canvas.width,
-    renderContext.canvas.height
+    globalSize.width,
+    globalSize.height,
+    renderContext.RGBA,
+    renderContext.UNSIGNED_BYTE,
+    typedArray
   );
-  callback(
-    renderContext.getImageData(
-      0,
-      0,
-      renderContext.canvas.width,
-      renderContext.canvas.height
-    )
-  );
+  callback(typedArray);
   if (video.ended) {
     console.warn("ended");
     return;
@@ -44,9 +62,9 @@ export default function createVideoStream(file, frameCallback) {
  */
 export function createVideoStreamFromElement(videoElement, frameCallback) {
   const canvas = document.createElement("canvas");
-  canvas.width = 800;
-  canvas.height = 600;
-  const ctx = canvas.getContext("2d");
+  canvas.width = globalSize.width;
+  canvas.height = globalSize.height;
+  const ctx = canvas.getContext("webgl");
 
   requestAnimationFrame(() => frame(videoElement, ctx, frameCallback));
   if (videoElement.readyState === 4) {

@@ -11,11 +11,11 @@
     <br />
     <video
       id="firstVideo"
-      style="border: 1px solid; max-width: 800px; max-height: 600px; object-fit: cover"
+      style="border: 1px solid; max-width: 1080px; max-height: 960px; object-fit: cover"
     ></video>
     <video
       id="secondVideo"
-      style="border: 1px solid; max-width: 800px; max-height: 600px; object-fit: cover"
+      style="border: 1px solid; max-width: 1080px; max-height: 960px; object-fit: cover"
     ></video>
     <br />
     <br />
@@ -25,11 +25,6 @@
       const scriptTag = document.createElement("script");
       scriptTag.src = "./appWASM.js";
       document.body.appendChild(scriptTag);
-    </script>
-    <script>
-      const arrayScriptTag = document.createElement("script");
-      arrayScriptTag.src = "./wasm-arrays.js";
-      document.body.appendChild(arrayScriptTag);
     </script>
   </body>
 </html>

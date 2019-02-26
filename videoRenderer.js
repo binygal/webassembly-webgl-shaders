@@ -1,3 +1,5 @@
+import { ccallArrays } from "./wasm-arrays";
+
 /**
  *
  * @param {HTMLCanvasElement} canvas
@@ -29,7 +31,7 @@ export function setup() {
 
 /**
  *
- * @param {ImageData} firstImageData
+ * @param {Uint8Array} firstImageData
  * @param {ImageData} secondImageData
  */
 export function renderFrame(firstImageData, secondImageData) {
@@ -37,34 +39,19 @@ export function renderFrame(firstImageData, secondImageData) {
   ccallArrays("blendTexturesSetup", null, ["array"], [], {
     heapIn: "HEAPU8"
   });
-  ccallArrays("blendTexturesLoadMain", null, ["array"], [firstImageData.data], {
+  ccallArrays("blendTexturesLoadMain", null, ["array"], [firstImageData], {
     heapIn: "HEAPU8"
   });
   ccallArrays(
     "blendTexturesLoadSecondary",
     null,
     ["array"],
-    [secondImageData.data],
+    [secondImageData],
     {
       heapIn: "HEAPU8"
     }
   );
-  ccallArrays("blendTexturesRun", null, ["array"], [firstImageData.data], {
-    heapIn: "HEAPU8"
-  });
-  ccallArrays("detectingEdgesSetup", null, ["array"], [], {
-    heapIn: "HEAPU8"
-  });
-  ccallArrays(
-    "detectingEdgesLoadMain",
-    null,
-    ["array"],
-    [firstImageData.data],
-    {
-      heapIn: "HEAPU8"
-    }
-  );
-  ccallArrays("detectingEdgesRun", null, ["array"], [firstImageData.data], {
+  ccallArrays("blendTexturesRun", null, ["array"], [firstImageData], {
     heapIn: "HEAPU8"
   });
 }
