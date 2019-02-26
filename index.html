@@ -2,17 +2,35 @@
 <html>
   <head>
     <title>WebAssembly WebGL Shaders</title>
-    <script src="./wasm-arrays.js"></script>
-    <script src="./dist/appWASM.js"></script>
     <script src="index.js"></script>
   </head>
   <body>
-    <input id="fileInput" type="file" accept="image/*" value="./image.png" />
-    <input id="fileInput2" type="file" accept="image/*" value="./image.png" />
+    <canvas id="testCanvas"></canvas>
+    <input id="fileInput" type="file" />
+    <input id="fileInput2" type="file" accept="video/*" />
     <button id="convert">Convert</button>
     <br />
+    <video
+      id="firstVideo"
+      style="border: 1px solid; max-width: 800px; max-height: 600px; object-fit: cover"
+    ></video>
+    <video
+      id="secondVideo"
+      style="border: 1px solid; max-width: 800px; max-height: 600px; object-fit: cover"
+    ></video>
     <br />
-    <span id="canvasContainer"></span>
+    <br />
+    <span id="canvasContainer"> </span>
     <span id="canvasContainer1"></span>
+    <script>
+      const scriptTag = document.createElement("script");
+      scriptTag.src = "./appWASM.js";
+      document.body.appendChild(scriptTag);
+    </script>
+    <script>
+      const scriptTag = document.createElement("script");
+      scriptTag.src = "./wasm-arrays.js";
+      document.body.appendChild(scriptTag);
+    </script>
   </body>
 </html>

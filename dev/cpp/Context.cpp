@@ -148,7 +148,6 @@ Context::~Context (void) {
     emscripten_webgl_destroy_context(context);
 }
 
-
 void Context::setup() {
 // Make the context current and use the program
     emscripten_webgl_make_context_current(context);

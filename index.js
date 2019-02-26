@@ -1,4 +1,12 @@
-"use strict";
+import { Subject, zip } from "rxjs";
+
+import { createVideoStreamFromElement } from "./createVideoStream";
+import {
+  clearContex,
+  createContext,
+  renderFrame,
+  setup
+} from "./videoRenderer";
 
 window.addEventListener("wasmLoaded", () => {
   console.log("wasmLoaded");
@@ -10,114 +18,92 @@ window.addEventListener("wasmLoaded", () => {
   const canvasContainer1 = document.getElementById("canvasContainer1");
   const fileInput = document.getElementById("fileInput");
   const fileInput2 = document.getElementById("fileInput2");
+  /** @type {HTMLVideoElement} */
+  const firstVideoElement = document.getElementById("firstVideo");
+  /** @type {HTMLVideoElement} */
+  const secondVideoElement = document.getElementById("secondVideo");
   const convert = document.getElementById("convert");
 
-  const createCanvas = (id, index, width, height) => {
+  firstVideoElement.addEventListener("loadeddata", () => {
     const canvas = document.createElement("canvas");
-    canvas.id = id;
-    canvas.width = width;
-    canvas.height = height;
-    canvasContainer.appendChild(canvas);
-    const context = canvas.getContext("webgl2");
+    canvas.id = "previewCanvas";
+    canvas.height = firstVideoElement.clientHeight;
+    canvas.width = firstVideoElement.clientWidth;
 
-    const idBuffer = Module._malloc(id.length + 1);
-    stringToUTF8(id, idBuffer, id.length + 1);
-    Module.ccall(
-      "createContext",
-      null,
-      ["number", "number", "number", "number"],
-      [width, height, idBuffer, index]
-    );
-  };
+    secondVideoElement.style.maxWidth = `${firstVideoElement.clientWidth}px`;
+    secondVideoElement.style.maxHeight = `${firstVideoElement.clientHeight}px`;
+    previewCanvasContext = canvas.getContext("2d");
+    previewCanvasContext.drawImage(firstVideoElement, 0, 0);
+  });
 
-  const loadImage1 = src => {
-    Module.ccall("clearContexts", null, null, null);
+  secondVideoElement.addEventListener("loadeddata", () => {
+    const canvas = document.createElement("canvas");
+    canvas.id = "previewCanvas";
+    canvas.height = firstVideoElement.clientHeight;
+    canvas.width = firstVideoElement.clientWidth;
 
-    const img = new Image();
-    img.addEventListener("load", () => {
-      const canvas = document.createElement("canvas");
-      canvas.id = "previewCanvas";
-      canvas.height = img.height;
-      canvas.width = img.width;
+    secondaryCanvasContext = canvas.getContext("2d");
+    secondaryCanvasContext.drawImage(secondVideoElement, 0, 0);
+  });
 
-      canvasContainer.innerHTML = "";
-      previewCanvasContext = canvas.getContext("2d");
-      previewCanvasContext.drawImage(img, 0, 0);
-      canvasContainer.appendChild(canvas);
+  function createCanvases(size) {
+    canvasContainer.childNodes.forEach(c => canvasContainer.removeChild(c));
+    const textureLoadCanvas = document.createElement("canvas");
+    textureLoadCanvas.id = "textureLoad";
+    textureLoadCanvas.width = 800;
+    textureLoadCanvas.height = 600;
+    canvasContainer.appendChild(textureLoadCanvas);
 
-      createCanvas("textureLoad", 0, img.width, img.height);
-      createCanvas("edgeDetect", 1, img.width, img.height);
+    const edgeDetectCanvas = document.createElement("canvas");
+    edgeDetectCanvas.id = "edgeDetect";
+    edgeDetectCanvas.width = 800;
+    edgeDetectCanvas.height = 600;
+    canvasContainer.appendChild(edgeDetectCanvas);
+
+    createContext(textureLoadCanvas, 0);
+    createContext(edgeDetectCanvas, 1);
+  }
+
+  function loadFirstVideo(src) {
+    clearContex();
+    firstVideoElement.src = src;
+    createCanvases({
+      width: firstVideoElement.clientWidth,
+      height: firstVideoElement.clientHeight
     });
+  }
 
-    img.src = src;
-  };
+  function loadSecondVideo(src) {
+    secondVideoElement.src = src;
+  }
 
-  const loadImage2 = src => {
-    const img = new Image();
-    img.addEventListener("load", () => {
-      const secondaryCanvas = document.createElement("canvas");
-      secondaryCanvas.id = "secondaryCanvas";
-      secondaryCanvas.height = img.height;
-      secondaryCanvas.width = img.width;
-
-      canvasContainer1.innerHTML = "";
-      secondaryCanvasContext = secondaryCanvas.getContext("2d");
-      secondaryCanvasContext.drawImage(img, 0, 0);
-      canvasContainer1.appendChild(secondaryCanvas);
-    });
-
-    img.src = src;
-  };
-
-  // Default image
-  loadImage1("image.png");
-  loadImage2("image.png");
+  loadFirstVideo("./dog.mp4");
+  loadSecondVideo("./race.mp4");
 
   // File input
   fileInput.addEventListener("change", event =>
-    loadImage1(URL.createObjectURL(event.target.files[0]))
+    loadFirstVideo(URL.createObjectURL(event.target.files[0]))
   );
   fileInput2.addEventListener("change", event =>
-    loadImage2(URL.createObjectURL(event.target.files[0]))
+    loadSecondVideo(URL.createObjectURL(event.target.files[0]))
   );
 
   convert.addEventListener("click", () => {
-    const previewCanvas = document.getElementById("previewCanvas");
-    // Get imageData from the image
-    const image1Data = previewCanvasContext.getImageData(
-      0,
-      0,
-      previewCanvas.width,
-      previewCanvas.height
-    ).data;
-    const image2Data = secondaryCanvasContext.getImageData(
-      0,
-      0,
-      previewCanvas.width,
-      previewCanvas.height
-    ).data;
+    const firstVideoSubject = new Subject();
+    const secondVideoSubject = new Subject();
 
-    // Pass the imageData to the C++ code
-    ccallArrays("blendTexturesSetup", null, ["array"], [image1Data], {
-      heapIn: "HEAPU8"
+    setup();
+    createVideoStreamFromElement(firstVideoElement, imageData => {
+      firstVideoSubject.next(imageData);
     });
-    ccallArrays("blendTexturesLoadMain", null, ["array"], [image2Data], {
-      heapIn: "HEAPU8"
+    createVideoStreamFromElement(secondVideoElement, imageData => {
+      secondVideoSubject.next(imageData);
     });
-    ccallArrays("blendTexturesLoadSecondary", null, ["array"], [image1Data], {
-      heapIn: "HEAPU8"
-    });
-    ccallArrays("blendTexturesRun", null, ["array"], [image1Data], {
-      heapIn: "HEAPU8"
-    });
-    ccallArrays("detectingEdgesSetup", null, ["array"], [image1Data], {
-      heapIn: "HEAPU8"
-    });
-    ccallArrays("detectingEdgesLoadMain", null, ["array"], [image1Data], {
-      heapIn: "HEAPU8"
-    });
-    ccallArrays("detectingEdgesRun", null, ["array"], [image1Data], {
-      heapIn: "HEAPU8"
-    });
+
+    const testCanvas = document.getElementById("testCanvas");
+    const testContext = testCanvas.getContext("2d");
+    zip(firstVideoSubject, secondVideoSubject).subscribe(images =>
+      renderFrame(images[0], images[1], testContext)
+    );
   });
 });
