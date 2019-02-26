@@ -11,39 +11,43 @@ std::string vertex_source =
     "   v_texCoord = texCoord;  \n"
     "}                            \n";
 
-std::string texture_load_fragment_source =
+std::string mix_images_fragment_source =
     "precision mediump float;                            \n"
     "varying vec2 v_texCoord;                            \n"
-    "uniform sampler2D texture;                        \n"
+    "uniform sampler2D texture1;                        \n"
+    "uniform sampler2D texture2;                        \n"
     "void main()                                         \n"
-    "{                                                   \n"
-    "  gl_FragColor = texture2D( texture, v_texCoord );   \n"
+    "{        \n"
+    "   texture1;\n"                                      
+    "  vec4 color1 = texture2D(texture1, v_texCoord) * 0.5;    \n"
+    "  vec4 color2 = texture2D(texture2, v_texCoord) * 0.5;    \n"                                 
+    "  gl_FragColor = color1 + color2;   \n"
     "}                                                   \n";
 
 
 std::string edge_detect_fragment_source =
     "precision mediump float;                            \n"
     "varying vec2 v_texCoord;                            \n"
-    "uniform sampler2D texture;                        \n"
+    "uniform sampler2D texture1;                        \n"
     "uniform float width;  \n"
     "uniform float height;  \n"
     "void main()                                         \n"
-    "{                                                   \n"
-    "  vec4 pixel = texture2D(texture, v_texCoord);              \n"
+    "{          \n"
+    "  vec4 pixel = texture2D(texture1, v_texCoord);              \n"
     "  vec4 n[9];\n"
 
     "  float w = 1.0 / width;\n"
     "  float h = 1.0 / height;\n"
 
-    "  n[0] = texture2D(texture, v_texCoord + vec2(0.0, 0.0) );\n"
-    "  n[1] = texture2D(texture, v_texCoord + vec2(w, 0.0) );\n"
-    "  n[2] = texture2D(texture, v_texCoord + vec2(2.0*w, 0.0) );\n"
-    "  n[3] = texture2D(texture, v_texCoord + vec2(0.0*w, h) );\n"
-    "  n[4] = texture2D(texture, v_texCoord + vec2(w, h) );\n"
-    "  n[5] = texture2D(texture, v_texCoord + vec2(2.0*w, h) );\n"
-    "  n[6] = texture2D(texture, v_texCoord + vec2(0.0, 2.0*h) );\n"
-    "  n[7] = texture2D(texture, v_texCoord + vec2(w, 2.0*h) );\n"
-    "  n[8] = texture2D(texture, v_texCoord + vec2(2.0*w, 2.0*h) );\n"
+    "  n[0] = texture2D(texture1, v_texCoord + vec2(0.0, 0.0) );\n"
+    "  n[1] = texture2D(texture1, v_texCoord + vec2(w, 0.0) );\n"
+    "  n[2] = texture2D(texture1, v_texCoord + vec2(2.0*w, 0.0) );\n"
+    "  n[3] = texture2D(texture1, v_texCoord + vec2(0.0*w, h) );\n"
+    "  n[4] = texture2D(texture1, v_texCoord + vec2(w, h) );\n"
+    "  n[5] = texture2D(texture1, v_texCoord + vec2(2.0*w, h) );\n"
+    "  n[6] = texture2D(texture1, v_texCoord + vec2(0.0, 2.0*h) );\n"
+    "  n[7] = texture2D(texture1, v_texCoord + vec2(w, 2.0*h) );\n"
+    "  n[8] = texture2D(texture1, v_texCoord + vec2(2.0*w, 2.0*h) );\n"
 
     "  vec4 sobel_x = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);\n"
     "  vec4 sobel_y = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);\n"
@@ -120,7 +124,7 @@ Context::Context (int w, int h, char * id) {
 
     // Compile shaders
     if (std::string(id) == "textureLoad") {
-        fragmentShader = CompileShader(GL_FRAGMENT_SHADER, &texture_load_fragment_source);
+        fragmentShader = CompileShader(GL_FRAGMENT_SHADER, &mix_images_fragment_source);
         vertexShader = CompileShader(GL_VERTEX_SHADER, &vertex_source);
 
     } else if (std::string(id) == "edgeDetect") {
@@ -144,21 +148,10 @@ Context::~Context (void) {
     emscripten_webgl_destroy_context(context);
 }
 
-
-void Context::run (uint8_t* buffer) {
-
-    // Make the context current and use the program
+void Context::setup() {
+// Make the context current and use the program
     emscripten_webgl_make_context_current(context);
     glUseProgram( programObject );
-
-    GLuint texId;
-    GLuint vertexObject;
-    GLuint indexObject;
-
-    // Get the attribute/sampler locations
-    GLint positionLoc = glGetAttribLocation(programObject, "position");
-    GLint texCoordLoc = glGetAttribLocation(programObject, "texCoord");
-    GLint textureLoc = glGetUniformLocation(programObject, "texture");
 
     // For "ERROR :GL_INVALID_OPERATION : glUniform1i: wrong uniform function for type"
     // https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glUniform.xhtml
@@ -166,20 +159,41 @@ void Context::run (uint8_t* buffer) {
     float heightUniform = glGetUniformLocation(programObject, "height");
     glUniform1f(widthUniform, (float) width);
     glUniform1f(heightUniform, (float) height);
+}
 
+void Context::setupTexture(const GLchar * name, GLenum texture, uint8_t* buffer, int samplerNum) {
+    GLuint texId;
+    GLint textureLoc = glGetUniformLocation(programObject, name);
 
     // Generate a texture object
     glGenTextures(1, &texId);
-    glUniform1i(textureLoc, 0);
+    glUniform1i(textureLoc, samplerNum);
 
     // Bind it
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(texture);
     glBindTexture(GL_TEXTURE_2D, texId);
 
     // Load the texture from the image buffer
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
+
+void Context::setupMainTexture (uint8_t* buffer) {
+    setupTexture("texture1", GL_TEXTURE0, buffer, 0);
+}
+
+void Context::setupSecondaryTexture (uint8_t* buffer) {
+    setupTexture("texture2", GL_TEXTURE1, buffer, 1);
+}
+
+void Context::run () {
+    GLuint vertexObject;
+    GLuint indexObject;
+
+        // Get the attribute/sampler locations
+    GLint positionLoc = glGetAttribLocation(programObject, "position");
+    GLint texCoordLoc = glGetAttribLocation(programObject, "texCoord");
 
     // Vertex data of texture bounds
     GLfloat vVertices[] = { -1.0,  1.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 1.0,
