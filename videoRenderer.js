@@ -31,13 +31,8 @@ export function setup() {
  *
  * @param {ImageData} firstImageData
  * @param {ImageData} secondImageData
- * @param {CanvasRenderingContext2D} context
  */
-export function renderFrame(firstImageData, secondImageData, context) {
-  // console.log(firstImageData);
-
-  context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-  context.putImageData(firstImageData, 0, 0);
+export function renderFrame(firstImageData, secondImageData) {
   // Pass the imageData to the C++ code
   ccallArrays("blendTexturesSetup", null, ["array"], [], {
     heapIn: "HEAPU8"

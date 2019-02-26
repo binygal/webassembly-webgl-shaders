@@ -5,7 +5,6 @@
     <script src="index.js"></script>
   </head>
   <body>
-    <canvas id="testCanvas"></canvas>
     <input id="fileInput" type="file" />
     <input id="fileInput2" type="file" accept="video/*" />
     <button id="convert">Convert</button>
@@ -28,9 +27,9 @@
       document.body.appendChild(scriptTag);
     </script>
     <script>
-      const scriptTag = document.createElement("script");
-      scriptTag.src = "./wasm-arrays.js";
-      document.body.appendChild(scriptTag);
+      const arrayScriptTag = document.createElement("script");
+      arrayScriptTag.src = "./wasm-arrays.js";
+      document.body.appendChild(arrayScriptTag);
     </script>
   </body>
 </html>

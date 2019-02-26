@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Demo project for using WebGL shaders in WebAssembly",
   "scripts": {
+    "deploy": "rm -rf dist && mkdir dist && npm run copy-assets && parcel build index.html",
     "build": "rm -rf build && mkdir build && cd build && cmake -G\"MSYS Makefiles\" .. && npm install",
     "serve": "ws",
     "copy-assets": "cp assets/* dist",

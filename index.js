@@ -100,10 +100,8 @@ window.addEventListener("wasmLoaded", () => {
       secondVideoSubject.next(imageData);
     });
 
-    const testCanvas = document.getElementById("testCanvas");
-    const testContext = testCanvas.getContext("2d");
     zip(firstVideoSubject, secondVideoSubject).subscribe(images =>
-      renderFrame(images[0], images[1], testContext)
+      renderFrame(images[0], images[1])
     );
   });
 });
